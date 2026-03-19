@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Система /roll — Клинок, рассекающий демонов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050711;
+      --bg-alt: #0d101e;
+      --accent: #4fd1c5;
+      --accent-soft: rgba(79, 209, 197, 0.12);
+      --text: #e4e9f5;
+      --muted: #8a92b2;
+      --border: #252a40;
+      --danger: #f56565;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+      --radius-lg: 18px;
+      --radius-sm: 10px;
+    }
+
+    /* Светлая тема */
+    .theme-light {
+      --bg: #f3f4f6;
+      --bg-alt: #ffffff;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --text: #020617;
+      --muted: #4b5563;
+      --border: #d1d5db;
+      --danger: #dc2626;
+      --shadow: 0 18px 45px rgba(148, 163, 184, 0.4);
+    }
+
+    .theme-light body {
+      background:
+        radial-gradient(circle at top left, #bfdbfe 0, rgba(243, 244, 246, 0) 55%),
+        radial-gradient(circle at bottom right, #fecaca 0, rgba(243, 244, 246, 0) 55%),
+        var(--bg);
+    }
+
+    .theme-light .shell {
+      background: linear-gradient(135deg, #ffffff, #f3f4f6);
+      border-color: rgba(148, 163, 184, 0.8);
+      backdrop-filter: blur(18px);
+    }
+
+    .theme-light .shell-header {
+      border-bottom-color: rgba(148, 163, 184, 0.7);
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.14) 0, #e5e7eb 52%);
+    }
+
+    .theme-light .card {
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.05) 0, #ffffff 55%);
+      border-color: rgba(209, 213, 219, 1);
+      box-shadow: 0 10px 30px rgba(148, 163, 184, 0.4);
+    }
+
+    .theme-light table {
+      background: #f9fafb;
+    }
+    .theme-light th {
+      background: #e5e7eb;
+      color: #4b5563;
+      border-bottom-color: #d1d5db;
+    }
+    .theme-light tr:nth-child(even) td {
+      background: #f3f4f6;
+    }
+    .theme-light tr:hover td {
+      background: #dbeafe;
+    }
+
+    .theme-light code {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+    .theme-light pre {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+
+    .theme-light .badge {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1e3a8a;
+    }
+    .theme-light .chip {
+      background: #f9fafb;
+      border-color: #e5e7eb;
+      color: #4b5563;
+    }
+    .theme-light .chip:hover {
+      background: #e0f2fe;
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+    }
+
+    .theme-light .pill,
+    .theme-light .pill-inline {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #4b5563;
+    }
+    .theme-light .pill.strong {
+      color: #111827;
+      border-color: #9ca3af;
+    }
+    .theme-light .pill:hover {
+      background: #e0f2fe;
+      border-color: #93c5fd;
+      color: #111827;
+    }
+
+    .theme-light .roll-result {
+      background: #f9fafb;
+      border-color: #d1d5db;
+      color: #4b5563;
+    }
+
+    .theme-light .footer {
+      border-top-color: #e5e7eb;
+      color: #6b7280;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+    radial-gradient(circle at top left, #1a365d 0, rgba(5, 7, 17, 0) 55%),
+    radial-gradient(circle at bottom right, #742a2a 0, rgba(5, 7, 17, 0) 55%),
+    var(--bg);
+    display: flex;
+    justify-content: center;   /* по центру по горизонтали */
+    align-items: center;       /* по центру по вертикали */
+    padding: 32px 16px;        /* можно без большого нижнего отступа */
+    }   
+    .shell {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(135deg, rgba(13, 16, 30, 0.96), rgba(9, 11, 22, 0.98));
+      border-radius: 26px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(26px);
+    }
+    .shell-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      background: radial-gradient(circle at top left, rgba(79, 209, 197, 0.2) 0, rgba(13, 16, 30, 0.96) 52%);
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #ef4444;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.5);
+    }
+    .dot:nth-child(2) {
+      background: #facc15;
+    }
+    .dot:nth-child(3) {
+      background: #22c55e;
+    }
+    .shell-title {
+      margin-left: 8px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex: 1;
+    }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+      cursor: pointer;
+    }
+    .theme-toggle-indicator {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #facc15, #f97316);
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.9);
+    }
+    .theme-light .theme-toggle {
+      background: #f9fafb;
+      color: #4b5563;
+    }
+    .theme-light .theme-toggle-indicator {
+      background: linear-gradient(135deg, #0f172a, #1f2937);
+      box-shadow: 0 0 10px rgba(30, 64, 175, 0.9);
+    }
+    .content {
+      padding: 24px 24px 30px;
+    }
+    @media (min-width: 900px) {
+      .content {
+        padding: 30px 40px 40px;
+      }
+    }
+    h1, h2, h3 {
+      margin: 0 0 8px;
+      font-weight: 650;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: clamp(22px, 3vw, 28px);
+    }
+    h2 {
+      font-size: 17px;
+      margin-top: 26px;
+    }
+    h3 {
+      font-size: 15px;
+      margin-top: 20px;
+    }
+    p {
+      margin: 4px 0 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(79, 209, 197, 0.9);
+    }
+    .lead {
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .highlight {
+      color: var(--accent);
+      font-weight: 650;
+      text-shadow: 0 0 14px var(--accent-soft);
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 4px;
+    }
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.85);
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+    }
+    .chip:hover {
+      background: rgba(30, 64, 175, 0.7);
+      border-color: rgba(129, 140, 248, 0.9);
+      transform: translateY(-1px);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
+      gap: 18px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .card {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at top left, rgba(79, 209, 197, 0.09) 0, rgba(7, 10, 24, 0.96) 55%);
+      padding: 16px 16px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: rgba(5, 7, 17, 0.7);
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+      text-align: left;
+    }
+    th {
+      background: rgba(15, 23, 42, 0.95);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    tr:nth-child(even) td {
+      background: rgba(15, 23, 42, 0.75);
+    }
+    tr:hover td {
+      background: rgba(30, 64, 175, 0.28);
+    }
+    code {
+      font-family: ui-monospace, Menlo, Monaco, "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 2px 5px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      border: 1px solid rgba(75, 85, 99, 0.8);
+    }
+    pre {
+      margin: 8px 0 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(5, 7, 17, 0.9);
+      border: 1px solid rgba(30, 64, 175, 0.55);
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    pre code {
+      border: none;
+      background: transparent;
+      padding: 0;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .pill {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+    }
+    .pill.strong {
+      border-color: rgba(248, 250, 252, 0.8);
+      color: var(--text);
+    }
+    .pill:hover {
+      background: rgba(30, 64, 175, 0.7);
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #e5e7eb;
+      transform: translateY(-1px);
+    }
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .tagline {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+    .section {
+      margin-top: 22px;
+    }
+    .accent-border {
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+      margin-top: 10px;
+    }
+    .danger {
+      color: var(--danger);
+      font-weight: 600;
+    }
+    .footer {
+      margin-top: 18px;
+      border-top: 1px dashed rgba(75, 85, 99, 0.7);
+      padding-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+    }
+    .footer span {
+      white-space: nowrap;
+    }
+    .pill-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+      margin-left: 6px;
+    }
+    .pill-inline .status {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Интерактивный блок /roll */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+    .tab-button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 5px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+    }
+    .tab-button:hover {
+      background: rgba(30, 64, 175, 0.7);
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #e5e7eb;
+      transform: translateY(-1px);
+    }
+    .tab-button.active {
+      background: radial-gradient(circle at top left, rgba(79, 209, 197, 0.4) 0, rgba(15, 23, 42, 1) 55%);
+      border-color: rgba(79, 209, 197, 0.8);
+      color: var(--text);
+    }
+    .theme-light .tab-button {
+      background: #ffffff;
+      border-color: #d1d5db;
+      color: #111827;
+    }
+    .theme-light .tab-button:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      color: #111827;
+    }
+    .theme-light .tab-button.active {
+      background: #ffffff;
+      border-color: rgba(37, 99, 235, 0.8);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      color: #111827;
+    }
+    .tab-panel {
+      display: none;
+      margin-top: 6px;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    .roll-tool {
+      margin-top: 22px;
+    }
+    .roll-tool-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 16px;
+    }
+    @media (max-width: 850px) {
+      .roll-tool-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .roll-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .roll-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+    .roll-select,
+    .roll-input {
+      width: 100%;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+    .roll-select:focus,
+    .roll-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.4);
+    }
+    .roll-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      cursor: pointer;
+      background: radial-gradient(circle at top left, rgba(79, 209, 197, 0.6) 0, rgba(13, 16, 30, 1) 55%);
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.8);
+    }
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.95);
+    }
+    .btn-secondary:hover {
+      background: rgba(30, 41, 59, 1);
+    }
+    .roll-result {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.92);
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 32px;
+      white-space: pre-line;
+    }
+    .roll-result strong {
+      color: var(--text);
+    }
+
+    /* История бросков */
+    .roll-history {
+      margin-top: 14px;
+      border-top: 1px dashed rgba(75, 85, 99, 0.8);
+      padding-top: 10px;
+    }
+    .roll-history-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .roll-history-list {
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .roll-history-item {
+      padding: 2px 0;
+      border-bottom: 1px dotted rgba(51, 65, 85, 0.7);
+    }
+    .roll-history-item:last-child {
+      border-bottom: none;
+    }
+
+    .theme-light .roll-select,
+    .theme-light .roll-input {
+      background: #ffffff;
+      border-color: #d1d5db;
+      color: #111827;
+    }
+    .theme-light .btn {
+      background: #ffffff;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+    .theme-light .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+    .theme-light .btn-secondary:hover {
+      background: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="shell-header">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="shell-title">roll-system / demon-slayer</div>
+      <button id="themeToggle" class="theme-toggle" type="button">
+        <span class="theme-toggle-indicator"></span>
+        <span id="themeToggleLabel">Тёмная тема</span>
+      </button>
+    </header>
+    <div class="content">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>RP Combat System</span>
+      </div>
+      <div>
+        <h1>Система /roll для вселенной «Клинок, рассекающий демонов»</h1>
+        <p class="lead">
+          Лёгкая система бросков для ролевых боёв: <span class="highlight">0–100</span>,
+          у кого результат выше — тот успешнее действует. Ранги задают преимущество,
+          Столпы и Луны чаще всего играются как <span class="highlight">no roll</span>.
+        </p>
+        <div class="chips">
+          <div class="chip">/roll 0–100</div>
+          <div class="chip">учёт рангов</div>
+          <div class="chip">столпы и луны — no roll</div>
+          <div class="chip">формат: /me, /roll, /do</div>
+        </div>
+      </div>
+      <section class="section grid">
+        <!-- Левая колонка -->
+        <article class="card">
+          <h2>Основные правила броска</h2>
+          <p>
+            <strong>Диапазон:</strong> от <strong>0</strong> до <strong>100</strong>.<br />
+            <strong>Базовое правило:</strong> у кого итоговый результат /roll
+            <strong>выше</strong>, тот выполняет действие успешнее.
+          </p>
+          <p>
+            Бросок используется, когда есть конфликт интересов:
+            атака ↔ защита, уклонение, перехват, борьба за инициативу.
+          </p>
+          <h3>Формат команд</h3>
+          <pre><code>/me Кокушибо совершает мощную горизонтальную атаку по руке Гию Томиоки.
+/roll   → Кокушибо: 59
+/me Гию Томиока пытается заблокировать удар катаной.
+/roll   → Гию: 57
+/do Столп воды получил слабый порез в области руки, 
+однако успешно сдержал сильный натиск.
+</code></pre>
+          <p class="note">
+            Числа могут трактоваться гибко: даже при успехе защитника удар всё равно
+            может частично задеть цель — сила/красота сцены важнее сухой математики.
+          </p>
+          <h3>Алгоритм хода</h3>
+          <div class="accent-border">
+            <p><strong>1.</strong> Игрок описывает намерение персонажа через <code>/me</code>.</p>
+            <p><strong>2.</strong> Определяется, кто бросает <code>/roll</code> (учёт no roll).</p>
+            <p><strong>3.</strong> Делается бросок (0–100), добавляются бонусы за ранг.</p>
+            <p><strong>4.</strong> Сравниваются результаты, и формулируется ответ через <code>/do</code>.</p>
+          </div>
+        </article>
+        <!-- Правая колонка -->
+        <article class="card">
+          <h2>Диапазон результата /roll</h2>
+          <p>Рекомендуемая трактовка для защиты/уклонения и смягчения урона.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Результат</th>
+                <th>Примерная трактовка</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0–30</td>
+                <td>Почти полная неудача, тяжёлое ранение, провал.</td>
+              </tr>
+              <tr>
+                <td>31–70</td>
+                <td>Частичный успех, удар смягчён, среднее/серьёзное ранение.</td>
+              </tr>
+              <tr>
+                <td>71–100</td>
+                <td>Успех: уклонение, блок или минимальный урон (царапина, порез).</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note">
+            Для атакующих результатов можно зеркально трактовать: высокий бросок
+            усиливает точность, глубину ранения и зрелищность сцены.
+          </p>
+          <h3>Роли команд</h3>
+          <div class="pill-row">
+            <span class="pill strong"><code>/me</code> — намерение</span>
+            <span class="pill strong"><code>/roll</code> — проверка</span>
+            <span class="pill strong"><code>/do</code> — итог сцены</span>
+          </div>
+        </article>
+      </section>
+      <!-- Ранги -->
+      <section class="section">
+        <h2>Таблица рангов</h2>
+        <p>
+          Ранги определяют относительную силу и опыт персонажей. Они дают
+          модификаторы к результату /roll и помогают трактовать сцены.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Ранг (охотники)</th>
+              <th>Ранг (демоны)</th>
+              <th>Описание для системы /roll</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Сейто</td>
+              <td>Otokuma</td>
+              <td>Самый низкий ранг, новички.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Мидзуното</td>
+              <td>Demon</td>
+              <td>Чуть опытнее, но всё ещё младший.</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Мидзуноэ</td>
+              <td>Keykon</td>
+              <td>Начальный боевой опыт.</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Каното</td>
+              <td>Hofuma</td>
+              <td>Стабильный боец.</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Каноэ</td>
+              <td>Chisuma</td>
+              <td>Уверенный охотник.</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Тсучиното</td>
+              <td>Asakuma</td>
+              <td>Средний уровень.</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Тсучиноэ</td>
+              <td>Hobura</td>
+              <td>Выше среднего.</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Хиното</td>
+              <td>Shateigashira</td>
+              <td>Сильный боец.</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Хиноэ</td>
+              <td>Wakagashira</td>
+              <td>Очень опытный.</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>Киното</td>
+              <td>Tsukomon</td>
+              <td>Почти вершина обычных рангов.</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>Киноэ</td>
+              <td>Shiko</td>
+              <td>Максимум среди обычных рангов.</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>Хашира</td>
+              <td>Луна (Shiko)</td>
+              <td>Элита среди всех.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">
+          Мысленно можно считать, что каждый ранг = один «ступень» силы. Разница ступеней
+          используется в таблице бонусов.
+        </p>
+      </section>
+      <!-- Бонусы за ранг -->
+      <section class="section">
+        <h2>Бонусы к /roll за разницу в рангах</h2>
+        <p>
+          Разницу ступеней считаем по номеру из таблицы рангов. Бонус получает
+          <strong>старший ранг</strong>. Итоговый результат не может превышать
+          <strong>100</strong> (кап).
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Разница ступеней</th>
+              <th>Бонус старшему</th>
+              <th>Комментарий</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0</td>
+              <td>+0</td>
+              <td>Ранги равны — чистое сравнение бросков.</td>
+            </tr>
+            <tr>
+              <td>1–2</td>
+              <td>+5</td>
+              <td>Небольшое, но заметное преимущество.</td>
+            </tr>
+            <tr>
+              <td>3–4</td>
+              <td>+10</td>
+              <td>Серьёзное превосходство.</td>
+            </tr>
+            <tr>
+              <td>5 и более</td>
+              <td>+15</td>
+              <td>Почти пропасть в уровне.</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>Пример с разницей в рангах</h3>
+        <pre><code>Атакующий: Киното (10)
+Защищающийся: Мидзуното (2)
+Разница: 8 ступеней → старший получает +15.
+Киното: /roll → 40  → 40 + 15 = 55
+Мидзуното: /roll → 60
+60 &gt; 55 — младший чудом уходит от сильного удара,
+но сцена всё равно подчёркивает его напряжение и риск.</code></pre>
+      </section>
+      <!-- No roll логика -->
+      <section class="section">
+        <h2>Столпы, Луны и Цугуко</h2>
+        <h3>Столпы и Луны как <span class="highlight">no roll</span></h3>
+        <p>
+          В большинстве сцен против обычных рангов (Сейто–Киноэ) Столпы и Луны
+          считаются <strong>no roll</strong>:
+        </p>
+        <ul>
+          <li>их базовое действие (атака, техника, рывок) считается успешным по умолчанию;</li>
+          <li class="danger">/roll кидает жертва</li>
+          <li>результат /roll показывает, насколько ей удалось смягчить последствия.</li>
+        </ul>
+        <pre><code>Гию Томиока: /me наносит быстрый вертикально-секущий удар в область руки.
+(no roll — Гию не бросает)
+/me Демон ранга Хобура (Hobura) пытается уйти с траектории удара.
+/roll → 72
+0–30 → тяжёлое ранение с лишением конечности
+31–70 → серьёзный, но не лишение конечности
+71–100 → демон уходит от удара, отделавшись порезом
+</code></pre>
+        <h3>Цугуко</h3>
+        <p>
+          Цугуко — наследник Хаширы, поэтому в бою против обычных рангов он считается
+          как минимум на <strong>одну ступень выше Киноэ</strong>, то есть получает бонус:
+          <span class="pill-inline"><span class="status"></span>обычно +5 к /roll</span>
+        </p>
+        <p>
+          В бою против Столпа или Луны решение остаётся за гейм-мастером (либо на честность):
+        </p>
+        <ul>
+          <li>оба могут кидать /roll без бонусов;</li>
+          <li>можно дать Хашире или Луне небольшой бонус (+5/+10);</li>
+          <li>Луну можно оставить в режиме <strong>no roll</strong> против Цугуко. Как и Хаширу против Кровавой элиты.</li>
+        </ul>
+
+        <h3>Кровавая элита (демоны)</h3>
+        <p>
+          <strong>Кровавая элита</strong> — это демоны выше обычных рангов, но
+          <strong>слабее Низших Лун</strong>. По ощущению они играются как «предлуны»:
+          но <span class="highlight">без статуса no roll</span>.
+        </p>
+        <p>
+          В бою против обычных рангов (Сейто–Киноэ) Кровавую элиту удобно считать
+          как минимум на <strong>одну ступень выше</strong> — то есть давать небольшой бонус:
+          <span class="pill-inline"><span class="status"></span>обычно +5 к /roll</span>
+        </p>
+        <p>
+          Важно: в отличие от Лун/Столпов, Кровавая элита <strong>кидает /roll</strong> как обычно —
+          просто имеет преимущество по сцене и (при необходимости) небольшой бонус.
+        </p>
+        <p class="note">
+          В бою против Цугуко/Хаширы/Луны решение остаётся за гейм-мастером: можно оставить честные броски
+          без бонусов, либо дать небольшой бонус (+5/+10) тому, кто по сцене явно сильнее.
+        </p>
+      </section>
+      <!-- Интерактивный /roll -->
+      <section class="section roll-tool">
+        <h2>Интерактивные панели /roll</h2>
+        <p>
+          Здесь можно быстро посчитать разницу в рангах, а также смоделировать простой командный бой
+          от формата <strong>1 vs 2</strong> до <strong>3 vs 3</strong> с учётом условных «жизней».
+        </p>
+        <div class="tabs">
+          <button class="tab-button active" type="button" data-tab="ranked">Один на один (ранги)</button>
+          <button class="tab-button" type="button" data-tab="team">Командный бой 1–3 на 1–3</button>
+        </div>
+
+        <!-- Панель: расчёт /roll с рангами -->
+        <div class="tab-panel active" data-panel="ranked">
+          <div class="card">
+            <div class="roll-tool-grid">
+              <div>
+                <h3>Бросок с учётом рангов</h3>
+                <div class="roll-row">
+                  <span class="roll-label">Ваш ранг</span>
+                  <select id="rankA" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг соперника</span>
+                  <select id="rankB" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ваш /roll (0–100, опционально)</span>
+                  <input id="rollAInput" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll соперника (0–100, опционально)</span>
+                  <input id="rollBInput" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+                <div class="roll-actions">
+                  <button class="btn" id="btnRankedRoll">/roll c ранговым бонусом</button>
+                </div>
+                <div id="rankedResult" class="roll-result"></div>
+              </div>
+            </div>
+            <div class="roll-history">
+              <div class="roll-history-title">Краткая история бросков (последние 10)</div>
+              <div id="rollHistory" class="roll-history-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Панель: командный бой 1–3 на 1–3 -->
+        <div class="tab-panel" data-panel="team">
+          <div class="card">
+            <h3>Командный бой 1–3 на 1–3</h3>
+            <p class="note">
+              У каждой стороны можно указать от одного до трёх бойцов. У каждого бойца до
+              <strong>9 жизней</strong> (условно 3 «сердца» по 3). Можно вписать уже известный результат /roll
+              или оставить поле пустым, чтобы система бросила вместо вас.
+            </p>
+            <div class="roll-tool-grid">
+              <div>
+                <h3>Команда A</h3>
+                <div class="roll-row">
+                  <span class="roll-label">Боец A1 — имя</span>
+                  <input id="aName1" class="roll-input" type="text" placeholder="Имя или псевдоним" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни A1 (0–9)</span>
+                  <input id="aHp1" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг A1</span>
+                  <select id="aRank1" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll A1 (0–100, опционально)</span>
+                  <input id="aRoll1" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+
+                <div class="roll-row">
+                  <span class="roll-label">Боец A2 — имя (опционально)</span>
+                  <input id="aName2" class="roll-input" type="text" placeholder="Оставьте пустым, если нет бойца" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни A2 (0–9)</span>
+                  <input id="aHp2" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг A2</span>
+                  <select id="aRank2" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll A2 (0–100, опционально)</span>
+                  <input id="aRoll2" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+
+                <div class="roll-row">
+                  <span class="roll-label">Боец A3 — имя (опционально)</span>
+                  <input id="aName3" class="roll-input" type="text" placeholder="Оставьте пустым, если нет бойца" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни A3 (0–9)</span>
+                  <input id="aHp3" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг A3</span>
+                  <select id="aRank3" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll A3 (0–100, опционально)</span>
+                  <input id="aRoll3" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+              </div>
+
+              <div>
+                <h3>Команда B</h3>
+                <div class="roll-row">
+                  <span class="roll-label">Боец B1 — имя</span>
+                  <input id="bName1" class="roll-input" type="text" placeholder="Имя или псевдоним" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни B1 (0–9)</span>
+                  <input id="bHp1" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг B1</span>
+                  <select id="bRank1" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll B1 (0–100, опционально)</span>
+                  <input id="bRoll1" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+
+                <div class="roll-row">
+                  <span class="roll-label">Боец B2 — имя (опционально)</span>
+                  <input id="bName2" class="roll-input" type="text" placeholder="Оставьте пустым, если нет бойца" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни B2 (0–9)</span>
+                  <input id="bHp2" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг B2</span>
+                  <select id="bRank2" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll B2 (0–100, опционально)</span>
+                  <input id="bRoll2" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+
+                <div class="roll-row">
+                  <span class="roll-label">Боец B3 — имя (опционально)</span>
+                  <input id="bName3" class="roll-input" type="text" placeholder="Оставьте пустым, если нет бойца" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Жизни B3 (0–9)</span>
+                  <input id="bHp3" class="roll-input" type="number" min="0" max="9" value="9" />
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">Ранг B3</span>
+                  <select id="bRank3" class="roll-select">
+                    <option value="1">1 — Сейто / Otokuma</option>
+                    <option value="2">2 — Мидзуното / Demon</option>
+                    <option value="3">3 — Мидзуноэ / Keykon</option>
+                    <option value="4">4 — Каното / Hofuma</option>
+                    <option value="5">5 — Каноэ / Chisuma</option>
+                    <option value="6">6 — Тсучиното / Chikuma</option>
+                    <option value="7">7 — Тсучиноэ / Asakuma</option>
+                    <option value="8">8 — Хиното / Hobura</option>
+                    <option value="9">9 — Хиноэ / Shateigashira</option>
+                    <option value="10">10 — Киното / Wakagashira / Tsukomon</option>
+                    <option value="11">11 — Киноэ / Shiko</option>
+                    <option value="12">12 — Хашира / Луна (Shiko)</option>
+                  </select>
+                </div>
+                <div class="roll-row">
+                  <span class="roll-label">/roll B3 (0–100, опционально)</span>
+                  <input id="bRoll3" class="roll-input" type="number" min="0" max="100" placeholder="Пусто = случайный бросок" />
+                </div>
+              </div>
+            </div>
+
+            <div class="roll-actions">
+              <button class="btn" id="btnCommandRound" type="button">Смоделировать раунд</button>
+              <button class="btn btn-secondary" id="btnCommandReset" type="button">Сбросить всё</button>
+            </div>
+            <div id="commandResult" class="roll-result"></div>
+          </div>
+        </div>
+      </section>
+      <!-- Кто кидает /roll -->
+      <section class="section">
+        <h2>Кто кидает /roll в разных ситуациях</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Ситуация</th>
+              <th>Кто бросает</th>
+              <th>Как трактовать результат</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Оба — обычные ранги (Сейто–Киноэ)</td>
+              <td>Кидают оба</td>
+              <td>Сравнение с учётом бонусов по рангу.</td>
+            </tr>
+            <tr>
+              <td>Обычный ранг против Цугуко</td>
+              <td>Кидают оба</td>
+              <td>Цугуко обычно получает +15 к результату.</td>
+            </tr>
+            <tr>
+              <td>Обычный ранг против Столпа</td>
+              <td>Только обычный ранг</td>
+              <td>Столп no roll, /roll показывает успех защиты/уклонения.</td>
+            </tr>
+            <tr>
+              <td>Обычный ранг против Луны</td>
+              <td>Обычно только обычный ранг</td>
+              <td>Луна "no roll", /roll показывает, насколько смягчён удар.</td>
+            </tr>
+            <tr>
+              <td>Цугуко против Столпа</td>
+              <td>По решению гейм-мастера или столпа</td>
+              <td>Возможен бонус (+15) Луне или режим "no roll" для Луны.</td>
+            </tr>
+            <tr>
+              <td>Цугуко против Луны</td>
+              <td>По решению гейм-мастера или луны</td>
+              <td>Возможность кидать roll или режим "no roll" для Луны.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <!-- Footer -->
+      <footer class="footer">
+        <span>Система /roll для ролевых игр по вселенной «Клинок, рассекающий демонов».</span>
+        <span>Используйте, адаптируйте и развивайте под свой сервер.</span>
+      </footer>
+    </div>
+  </main>
+  <script>
+    // Тема (тёмная / светлая)
+    (function initTheme() {
+      try {
+        const saved = window.localStorage && window.localStorage.getItem('roll_theme');
+        if (saved === 'light') {
+          document.documentElement.classList.add('theme-light');
+        }
+      } catch (e) {}
+
+      const toggle = document.getElementById('themeToggle');
+      const label = document.getElementById('themeToggleLabel');
+
+      function syncLabel() {
+        const isLight = document.documentElement.classList.contains('theme-light');
+        if (label) {
+          label.textContent = isLight ? 'Светлая тема' : 'Тёмная тема';
+        }
+      }
+
+      syncLabel();
+
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const root = document.documentElement;
+          const isLight = root.classList.toggle('theme-light');
+          try {
+            if (window.localStorage) {
+              window.localStorage.setItem('roll_theme', isLight ? 'light' : 'dark');
+            }
+          } catch (e) {}
+          syncLabel();
+        });
+      }
+    })();
+
+    function computeBonus(diff) {
+      if (diff === 0) return 0;
+      if (diff <= 2) return 5;
+      if (diff <= 4) return 10;
+      return 15;
+    }
+
+    function roll0to100() {
+      return Math.floor(Math.random() * 101);
+    }
+
+    const btnRanked = document.getElementById('btnRankedRoll');
+    const rankedResult = document.getElementById('rankedResult');
+    const historyEl = document.getElementById('rollHistory');
+    const rankASelect = document.getElementById('rankA');
+    const rankBSelect = document.getElementById('rankB');
+    const rollAInput = document.getElementById('rollAInput');
+    const rollBInput = document.getElementById('rollBInput');
+    const HISTORY_LIMIT = 10;
+
+    function addToHistory(text) {
+      if (!historyEl) return;
+      const time = new Date();
+      const hh = String(time.getHours()).padStart(2, '0');
+      const mm = String(time.getMinutes()).padStart(2, '0');
+      const prefix = '[' + hh + ':' + mm + '] ';
+
+      const entry = document.createElement('div');
+      entry.className = 'roll-history-item';
+      entry.textContent = prefix + text;
+      historyEl.prepend(entry);
+
+      while (historyEl.children.length > HISTORY_LIMIT) {
+        historyEl.removeChild(historyEl.lastChild);
+      }
+    }
+
+    // восстановление выбранных рангов из localStorage
+    if (rankASelect && rankBSelect && window.localStorage) {
+      const savedA = window.localStorage.getItem('roll_rankA');
+      const savedB = window.localStorage.getItem('roll_rankB');
+      if (savedA) rankASelect.value = savedA;
+      if (savedB) rankBSelect.value = savedB;
+
+      rankASelect.addEventListener('change', () => {
+        window.localStorage.setItem('roll_rankA', rankASelect.value);
+      });
+      rankBSelect.addEventListener('change', () => {
+        window.localStorage.setItem('roll_rankB', rankBSelect.value);
+      });
+    }
+
+    if (btnRanked && rankedResult) {
+      btnRanked.addEventListener('click', () => {
+        const rankA = parseInt(document.getElementById('rankA').value, 10);
+        const rankB = parseInt(document.getElementById('rankB').value, 10);
+        let rawA;
+        let rawB;
+
+        const manualA = rollAInput ? parseInt(rollAInput.value, 10) : NaN;
+        const manualB = rollBInput ? parseInt(rollBInput.value, 10) : NaN;
+
+        if (!Number.isNaN(manualA) && manualA >= 0 && manualA <= 100) {
+          rawA = manualA;
+        } else {
+          rawA = roll0to100();
+        }
+
+        if (!Number.isNaN(manualB) && manualB >= 0 && manualB <= 100) {
+          rawB = manualB;
+        } else {
+          rawB = roll0to100();
+        }
+
+        const diff = Math.abs(rankA - rankB);
+        const bonus = computeBonus(diff);
+
+        let finalA = rawA;
+        let finalB = rawB;
+        let bonusText = '';
+
+        if (diff > 0) {
+          if (rankA > rankB) {
+            finalA = Math.min(100, rawA + bonus);
+            bonusText = 'Ваш ранг старше на ' + diff + ' ступеней → бонус +' + bonus + ' к вашему результату.';
+          } else {
+            finalB = Math.min(100, rawB + bonus);
+            bonusText = 'Ранг соперника старше на ' + diff + ' ступеней → бонус +' + bonus + ' к его результату.';
+          }
+        } else {
+          bonusText = 'Ранги равны — броски сравниваются без бонусов.';
+        }
+
+        let winner;
+        if (finalA > finalB) {
+          winner = 'Преимущество у ВАС (атакующий/защищающийся) — ваш итоговый результат выше.';
+        } else if (finalB > finalA) {
+          winner = 'Преимущество у СОПЕРНИКА — его итоговый результат выше.';
+        } else {
+          winner = 'Итоговые результаты равны — мастер может описать взаимный обмен ударами или ничью.';
+        }
+
+        rankedResult.innerHTML =
+          '<strong>Вы:</strong> ' + rawA + ' → ' + finalA +
+          '<br><strong>Соперник:</strong> ' + rawB + ' → ' + finalB +
+          '<br><br>' + bonusText +
+          '<br><br>' + winner;
+
+        addToHistory('Ранговый /roll → вы: ' + finalA + ', соперник: ' + finalB);
+      });
+    }
+
+    // Переключение вкладок
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    if (tabButtons.length && tabPanels.length) {
+      tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-tab');
+          tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
+          tabPanels.forEach((panel) => {
+            const panelName = panel.getAttribute('data-panel');
+            panel.classList.toggle('active', panelName === target);
+          });
+        });
+      });
+    }
+
+    // Командный бой 1–3 на 1–3
+    const commandResult = document.getElementById('commandResult');
+    const btnCommandRound = document.getElementById('btnCommandRound');
+    const btnCommandReset = document.getElementById('btnCommandReset');
+
+    function getTeamFighters(prefix) {
+      const fighters = [];
+      for (let i = 1; i <= 3; i++) {
+        const nameEl = document.getElementById(prefix + 'Name' + i);
+        const hpEl = document.getElementById(prefix + 'Hp' + i);
+        const rankEl = document.getElementById(prefix + 'Rank' + i);
+        const rollEl = document.getElementById(prefix + 'Roll' + i);
+        if (!nameEl || !hpEl || !rollEl) continue;
+
+        const name = nameEl.value.trim();
+        if (!name) continue;
+
+        let hp = parseInt(hpEl.value, 10);
+        if (Number.isNaN(hp) || hp < 0) hp = 0;
+        if (hp > 9) hp = 9;
+
+        let rank = rankEl ? parseInt(rankEl.value, 10) : 1;
+        if (Number.isNaN(rank) || rank < 1) rank = 1;
+        if (rank > 12) rank = 12;
+
+        const manualRoll = parseInt(rollEl.value, 10);
+        let rawRoll;
+        if (!Number.isNaN(manualRoll) && manualRoll >= 0 && manualRoll <= 100) {
+          rawRoll = manualRoll;
+        } else {
+          rawRoll = roll0to100();
+        }
+
+        const alive = hp > 0;
+        fighters.push({
+          id: prefix + i,
+          name,
+          hp,
+          rank,
+          rawRoll,
+          effectiveRoll: alive ? rawRoll : 0,
+          alive,
+          hpEl
+        });
+      }
+      return fighters;
+    }
+
+    if (btnCommandRound && commandResult) {
+      btnCommandRound.addEventListener('click', () => {
+        const teamA = getTeamFighters('a');
+        const teamB = getTeamFighters('b');
+
+        if (!teamA.length || !teamB.length) {
+          commandResult.textContent = 'У каждой стороны должен быть хотя бы один боец с именем и жизнями.';
+          return;
+        }
+
+        function applyRankBonus(rawLeft, rankLeft, rawRight, rankRight) {
+          const d = Math.abs(rankLeft - rankRight);
+          const bonus = computeBonus(d);
+          let finalLeft = rawLeft;
+          let finalRight = rawRight;
+          if (d > 0) {
+            if (rankLeft > rankRight) finalLeft = Math.min(100, rawLeft + bonus);
+            else finalRight = Math.min(100, rawRight + bonus);
+          }
+          return { finalLeft, finalRight, diffRanks: d, bonus };
+        }
+
+        const byIdA = {};
+        const byIdB = {};
+        teamA.forEach((f) => { byIdA[f.id] = f; });
+        teamB.forEach((f) => { byIdB[f.id] = f; });
+
+        const lines = [];
+        let anyDuel = false;
+
+        for (let i = 1; i <= 3; i++) {
+          const fa = byIdA['a' + i];
+          const fb = byIdB['b' + i];
+          if (!fa || !fb) continue;
+          if (!fa.alive || !fb.alive) continue;
+
+          anyDuel = true;
+
+          const adj = applyRankBonus(fa.rawRoll, fa.rank, fb.rawRoll, fb.rank);
+          const finalA = adj.finalLeft;
+          const finalB = adj.finalRight;
+          const rollDiff = Math.abs(finalA - finalB);
+
+          if (finalA === finalB) {
+            lines.push(fa.name + ' vs ' + fb.name + ' = Ничья (' + finalA + ' = ' + finalB + ').');
+            continue;
+          }
+
+          const winner = finalA > finalB ? fa : fb;
+          const loser = finalA > finalB ? fb : fa;
+
+          loser.hp = Math.max(0, loser.hp - 1);
+          if (loser.hpEl) loser.hpEl.value = String(loser.hp);
+
+          lines.push(
+            fa.name + ' vs ' + fb.name +
+            ' = Выиграл ' + winner.name +
+            ', поскольку бросок на ' + rollDiff + ' больше (' + (finalA > finalB ? finalA : finalB) +
+            ' vs ' + (finalA > finalB ? finalB : finalA) + '). Убирается 1 жизнь у ' +
+            loser.name + ' (осталось ' + loser.hp + ').'
+          );
+        }
+
+        if (!anyDuel) {
+          commandResult.textContent = 'Для раунда нужен хотя бы один парный бой: A1 vs B1 (или A2 vs B2, A3 vs B3). У обоих должны быть имена и HP > 0.';
+          return;
+        }
+
+        commandResult.textContent = lines.join('\n');
+        addToHistory('Командный бой → раунд по дуэлям');
+      });
+    }
+
+    if (btnCommandReset && commandResult) {
+      btnCommandReset.addEventListener('click', () => {
+        ['a', 'b'].forEach((prefix) => {
+          for (let i = 1; i <= 3; i++) {
+            const nameEl = document.getElementById(prefix + 'Name' + i);
+            const hpEl = document.getElementById(prefix + 'Hp' + i);
+            const rankEl = document.getElementById(prefix + 'Rank' + i);
+            const rollEl = document.getElementById(prefix + 'Roll' + i);
+            if (nameEl) nameEl.value = '';
+            if (hpEl) hpEl.value = '9';
+            if (rankEl) rankEl.value = '1';
+            if (rollEl) rollEl.value = '';
+          }
+        });
+        commandResult.textContent = '';
+      });
+    }
+  </script>
+</body>
+</html>
